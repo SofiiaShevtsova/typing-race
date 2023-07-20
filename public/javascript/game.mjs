@@ -4,4 +4,4 @@ if (!username) {
 	window.location.replace('/login');
 }
 
-const socket = io('', { query: { username } });
+const socket = io('http://localhost:3002/all-rooms', { query: { username } });
