@@ -1,41 +1,26 @@
-import { showMessageModal, showInputModal } from "./views/modal.mjs";
-import { appendRoomElement } from "./views/room.mjs";
-
-let roomName;
-
-const createRoomBtn = document.querySelector("#add-room-btn");
+import { showInputModal } from "./views/modal.mjs";
+import { allRooms, createRoom } from "./allRooms.mjs";
 
 const username = sessionStorage.getItem("username");
+const createRoomBtn = document.querySelector("#add-room-btn");
 
 if (!username) {
   window.location.replace("/login");
 }
 
-const socket = io("http://localhost:3002/all-rooms", { query: { username } });
-
-const showError = () => {
-  const onClose = () => {
-    sessionStorage.removeItem("username");
-    window.location.replace("/login");
-  };
-  showMessageModal({ message: "Enter new name!", onClose });
-};
-
-const getRoomName = (e) => {};
-
-socket.on("BAD_USER_NAME", showError);
-
-createRoomBtn.addEventListener("click", (e) => {
+const createNewRoom = () => {
+  let roomName;
   showInputModal({
     title: "Room name",
     onChange: (name) => {
       roomName = name;
     },
     onSubmit: () => {
-      appendRoomElement({ name: roomName, numberOfUsers: 1, onJoin: () => {} });
-      const socketRoom = io("http://localhost:3002/room", {
-        query: { roomName },
-      });
+      createRoom(roomName);
     },
   });
-});
+};
+
+allRooms(username);
+
+createRoomBtn.addEventListener("click", createNewRoom);
