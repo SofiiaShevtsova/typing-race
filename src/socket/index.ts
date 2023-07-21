@@ -1,10 +1,10 @@
 import { Server } from "socket.io";
 import * as config from "./config";
 
-import counter from "./allRooms";
-import counterWithRooms from "./createRoom";
+import allRooms from "./allRooms";
+import room from "./createRoom";
 
 export default (io: Server) => {
-  counter(io.of("/all-rooms"));
-  counterWithRooms(io.of("/room"));
+  allRooms(io.of("/all-rooms"));
+  room(io.of("/room"));
 };
