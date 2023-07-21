@@ -1,35 +1,49 @@
-const rooms: string[] = [];
-const roomsMap = new Map(rooms.map((roomId) => [roomId, 0]));
+import { type } from "os";
+import { socketEvents } from "../commons/constants";
 
-const getCurrentRoomId = (socket) =>
-  rooms.find((roomId) => socket.rooms.has(roomId));
+type Room = {
+  roomName: string;
+  userList: string[];
+};
+
+// {roomName: '555', userList:['sofiia', 'frick']}
+
+const rooms: Room[] = [];
+// const roomsMap = new Map(rooms.map((room) => [room, 0]));
+const checkRoomsList = (roomName) =>
+  rooms.find((room) => room.roomName === roomName);
+
+const getCurrentRoomName = (socket) =>
+  rooms.find((room) => socket.rooms.has(room));
 
 export default (io) => {
   io.on("connection", (socket) => {
-    console.log('room');
-    const roomName: string = socket.handshake.query.roomName as string;
-    console.log(roomName);
-    rooms.push(roomName)
-    console.log(rooms);
-    
-    
-    
-    socket.emit("UPDATE_ROOMS", rooms);
+    // console.log('room');
+    // const roomName: string = socket.handshake.query.roomName as string;
+    // console.log(roomName);
+    // rooms.push(roomName)
+    // console.log(rooms);
 
-    // socket.on("JOIN_ROOM", (roomId) => {
-    //   const prevRoomId = getCurrentRoomId(socket);
+    socket.on(socketEvents.JOIN_ROOM, ({ roomName, username }) => {
+      checkRoomsList(roomName)
+        ? checkRoomsList(roomName)?.userList.push(username)
+        : rooms.push({ roomName, userList: [username] });
 
-    //   if (roomId === prevRoomId) {
-    //     return;
-    //   }
-    //   if (prevRoomId) {
-    //     socket.leave(prevRoomId);
-    //   }
+      const prevRoomName = getCurrentRoomName(socket);
 
-    //   socket.join(roomId);
-    //   const counterValue = roomsMap.get(roomId);
-    //   io.to(socket.id).emit("JOIN_ROOM_DONE", { counterValue, roomId });
-    // });
+      if (roomName === prevRoomName) {
+        return;
+      }
+      if (prevRoomName) {
+        socket.leave(prevRoomName);
+      }
+
+      socket.join(roomName);
+      console.log(rooms);
+      
+
+      // io.to(socket.id).emit(socketEvents.JOINED_ROOM, checkRoomsList(roomName));
+    });
 
     // socket.on("INCREASE_COUNTER", () => {
     //   const currentRoomId = getCurrentRoomId(socket);

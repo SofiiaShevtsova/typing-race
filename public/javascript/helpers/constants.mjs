@@ -1,12 +1,15 @@
 export const socketEvents = {
     NEW_ROOM: 'new-room',
+    NEW_USER: 'new-user',
     BAD_ROOM_NAME: 'bad-room-name',
     BAD_USER_NAME: 'bad-user-name',
     ADD_ROOM: 'add-room',
     GET_ROOMS: 'get-rooms',
+    JOIN_ROOM: 'join-room',
+    JOINED_ROOM: 'joined-room',
 }
 
 export const socketNamespace = {
     ALL_ROOMS: 'http://localhost:3002/all-rooms',
-    ROOM: ''
+    ROOM: 'http://localhost:3002/room',
 }
