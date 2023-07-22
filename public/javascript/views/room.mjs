@@ -49,4 +49,6 @@ const getNumberOfUsersString = numberOfUsers => `${numberOfUsers} connected`;
 
 const removeRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.remove();
 
-export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement };
+const hideRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.classList.add('display-none');
+
+export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement, hideRoomElement };

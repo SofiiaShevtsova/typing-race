@@ -1,49 +1,55 @@
-import { type } from "os";
 import { socketEvents } from "../commons/constants";
+import { roomsArray, setRoomsArray, Room } from "./allRooms";
 
-type Room = {
-  roomName: string;
-  userList: string[];
-};
+const checkRoomsList = (roomName: string): Room | undefined =>
+  roomsArray.find((room: Room): boolean => room.roomName === roomName);
 
-// {roomName: '555', userList:['sofiia', 'frick']}
-
-const rooms: Room[] = [];
-// const roomsMap = new Map(rooms.map((room) => [room, 0]));
-const checkRoomsList = (roomName) =>
-  rooms.find((room) => room.roomName === roomName);
-
-const getCurrentRoomName = (socket) =>
-  rooms.find((room) => socket.rooms.has(room));
+const getRoom = (username): Room | undefined =>
+  roomsArray.find((room) => room.userList.includes(username));
 
 export default (io) => {
   io.on("connection", (socket) => {
-    // console.log('room');
-    // const roomName: string = socket.handshake.query.roomName as string;
-    // console.log(roomName);
-    // rooms.push(roomName)
-    // console.log(rooms);
 
     socket.on(socketEvents.JOIN_ROOM, ({ roomName, username }) => {
-      checkRoomsList(roomName)
-        ? checkRoomsList(roomName)?.userList.push(username)
-        : rooms.push({ roomName, userList: [username] });
+      const prevRoom = getRoom(username);
+      const currentRoom = checkRoomsList(roomName);
 
-      const prevRoomName = getCurrentRoomName(socket);
+      currentRoom
+        ? currentRoom.userList.push(username)
+        : setRoomsArray([...roomsArray, { roomName, userList: [username] }]);
 
-      if (roomName === prevRoomName) {
+      if (roomName === prevRoom?.roomName) {
         return;
       }
-      if (prevRoomName) {
-        socket.leave(prevRoomName);
+
+      if (prevRoom) {
+        socket.leave(socket.rooms);
+        prevRoom.userList = prevRoom.userList.filter(
+          (name: string): boolean => name !== username
+        );
+        if (prevRoom.userList.length === 0) {
+          setRoomsArray(
+            roomsArray.filter((room) => room.userList.length === 0)
+          );
+          io.emit(socketEvents.DELETE_ROOM, prevRoom);
+        }
       }
 
       socket.join(roomName);
-      console.log(rooms);
-      
+      setRoomsArray([...roomsArray]);
 
-      // io.to(socket.id).emit(socketEvents.JOINED_ROOM, checkRoomsList(roomName));
+      io.to(socket.id).emit(socketEvents.JOINED_ROOM, {
+        current: currentRoom,
+        prev: prevRoom?.userList.length !== 0 && prevRoom,
+        username
+      })
+
+      io.emit(socketEvents.JOINED_ROOM, {
+        current: currentRoom,
+        prev: prevRoom?.userList.length !== 0 && prevRoom,
+      });
     });
+
 
     // socket.on("INCREASE_COUNTER", () => {
     //   const currentRoomId = getCurrentRoomId(socket);

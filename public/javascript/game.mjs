@@ -1,8 +1,7 @@
 import { showInputModal } from "./views/modal.mjs";
 import { allRooms, createRoom } from "./allRooms.mjs";
-import { choiseRoom } from "./room.mjs";
+import { onJoinRoom, joinMyRoom } from "./room.mjs";
 import { appendRoomElement } from "./views/room.mjs";
-
 
 const createRoomBtn = document.querySelector("#add-room-btn");
 
@@ -19,16 +18,21 @@ const createNewRoom = () => {
       roomName = name;
     },
     onSubmit: () => {
-		createRoom(roomName, username);
+      createRoom(roomName);
     },
   });
 };
 
-  const showRoom = (room) => {
-	  appendRoomElement({ name: room.roomName, numberOfUsers: room.userList.length, onJoin: () => { } });
-	  choiseRoom(username)
-  };
-
+const showRoom = (room, myRoom = false) => {
+  appendRoomElement({
+    name: room.roomName,
+    numberOfUsers: room.userList.length,
+    onJoin: onJoinRoom(username),
+  });
+  if (myRoom) {
+    joinMyRoom(room.roomName, username)
+  }
+};
 
 allRooms(username, showRoom);
 

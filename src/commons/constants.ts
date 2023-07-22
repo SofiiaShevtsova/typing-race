@@ -7,6 +7,7 @@ type SocketEvents = {
     GET_ROOMS: string;
     JOIN_ROOM: string;
     JOINED_ROOM: string;
+    DELETE_ROOM: string;
 }
 
 export const socketEvents: SocketEvents = {
@@ -18,4 +19,5 @@ export const socketEvents: SocketEvents = {
     GET_ROOMS: 'get-rooms',
     JOIN_ROOM: 'join-room',
     JOINED_ROOM: 'joined-room',
+    DELETE_ROOM: 'delete-room',
 }
