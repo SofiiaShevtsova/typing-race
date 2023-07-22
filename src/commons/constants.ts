@@ -8,6 +8,8 @@ type SocketEvents = {
     JOIN_ROOM: string;
     JOINED_ROOM: string;
     DELETE_ROOM: string;
+    CHANGE_STATUS: string;
+    CHANGE_STATUS_DONE: string;
 }
 
 export const socketEvents: SocketEvents = {
@@ -20,4 +22,6 @@ export const socketEvents: SocketEvents = {
     JOIN_ROOM: 'join-room',
     JOINED_ROOM: 'joined-room',
     DELETE_ROOM: 'delete-room',
+    CHANGE_STATUS: 'change-status',
+    CHANGE_STATUS_DONE: 'change-status-done',
 }

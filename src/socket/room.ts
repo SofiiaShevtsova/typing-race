@@ -9,7 +9,6 @@ const getRoom = (username): Room | undefined =>
 
 export default (io) => {
   io.on("connection", (socket) => {
-
     socket.on(socketEvents.JOIN_ROOM, ({ roomName, username }) => {
       const prevRoom = getRoom(username);
       const currentRoom = checkRoomsList(roomName);
@@ -41,8 +40,8 @@ export default (io) => {
       io.to(socket.id).emit(socketEvents.JOINED_ROOM, {
         current: currentRoom,
         prev: prevRoom?.userList.length !== 0 && prevRoom,
-        username
-      })
+        username,
+      });
 
       io.emit(socketEvents.JOINED_ROOM, {
         current: currentRoom,
@@ -50,17 +49,9 @@ export default (io) => {
       });
     });
 
-
-    // socket.on("INCREASE_COUNTER", () => {
-    //   const currentRoomId = getCurrentRoomId(socket);
-    //   if (currentRoomId) {
-    //     const value = roomsMap.get(currentRoomId);
-    //     if (value) {
-    //       const newValue = value + 1;
-    //       roomsMap.set(currentRoomId, newValue);
-    //       io.to(currentRoomId).emit("UPDATE_COUNTER", newValue);
-    //     }
-    //   }
-    // });
+    socket.on(socketEvents.CHANGE_STATUS, ({ isReady, user }) => {
+      socket.emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
+      socket.broadcast.emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
+    });
   });
 };
