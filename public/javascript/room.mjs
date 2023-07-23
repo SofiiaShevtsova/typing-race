@@ -10,12 +10,14 @@ import {
   appendUserElement,
   changeReadyStatus,
   removeUserElement,
+  setProgress,
 } from "./views/user.mjs";
 import { userInRoom, startGame, userOutOfRoom } from "./game.mjs";
+import { showResultsModal } from "./views/modal.mjs";
 
 const quitRoomBtn = document.getElementById("quit-room-btn");
 
-const socket = io(socketNamespace.ROOM);
+let socket;
 
 let currentUser;
 let currentRoom;
@@ -25,24 +27,13 @@ const roomTitle = gameRoom.querySelector("#room-name");
 const usersContainer = document.querySelector("#users-wrapper");
 const readyStatusBtn = document.getElementById("ready-btn");
 
-export const onJoinRoom = (username) => {
-  return (event) => {
-    const roomName = event.target.dataset.roomName;
-    socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
-  };
-};
-
-export const joinMyRoom = (roomName, username) => {
-  socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
-};
-
 const deleteRoom = ({ roomName }) => {
   removeRoomElement(roomName);
 };
 
 const onClickQuitRoomBtn = () => {
-      socket.emit(socketEvents.LEAVE_ROOM, currentUser);
-    }
+  socket.emit(socketEvents.LEAVE_ROOM, currentUser);
+};
 
 const joinRoomDone = ({ current, prev, username = null }) => {
   updateNumberOfUsersInRoom({
@@ -54,7 +45,7 @@ const joinRoomDone = ({ current, prev, username = null }) => {
       name: prev.roomName,
       numberOfUsers: prev.userList.length,
     });
-  
+
   if (current.userList.length === MAXIMUM_USERS_FOR_ONE_ROOM) {
     hideRoomElement(current.roomName);
   }
@@ -88,15 +79,27 @@ const changedStatus = async ({ isReady, user }) => {
   changeReadyStatus({ username: user, ready: isReady });
 
   const statusList = [...document.querySelectorAll(".ready-status")];
-  const start = statusList.every(
-    (status) => status.dataset.ready === "true"
-  );
-console.log(start);
+  const start = statusList.every((status) => status.dataset.ready === "true");
   if (start) {
-      socket.emit(socketEvents.START_GAME, currentRoom);
+    socket.emit(socketEvents.START_GAME, currentRoom);
   }
-
 };
+
+export const sendUserProgress = ({ username, progress }) => {
+  socket.emit(socketEvents.SEND_PROGRESS, {username, progress})
+}
+
+const getprogress = ({ username, progress }) => {
+  setProgress({ username, progress })
+}
+
+export const gameResult = (username) => {
+  socket.emit(socketEvents.SEND_GAME_RESULT, username)
+}
+
+const showResult = (winners) => {
+  showResultsModal({usersSortedArray:winners, onClose:()=>{}})
+}
 
 const leaveRoom = ({ username, current }) => {
   if (username === currentUser) {
@@ -110,13 +113,32 @@ const leaveRoom = ({ username, current }) => {
 };
 
 const gameStarted = async ({ textId }) => {
-    await startGame({ textId, currentUser });
+  await startGame({ textId, currentUser });
+};
+
+const socketEventsList = (socket) => {
+  socket.on(socketEvents.DELETE_ROOM, deleteRoom);
+  socket.on(socketEvents.JOINED_ROOM, joinRoomDone);
+  socket.on(socketEvents.CHANGE_STATUS_DONE, changedStatus);
+  socket.on(socketEvents.LEAVE_ROOM_DONE, leaveRoom);
+  socket.on(socketEvents.START_GAME_TEXT, gameStarted);
+  socket.on(socketEvents.GET_PROGRESS, getprogress);
+  socket.on(socketEvents.SHOW_RESULT, showResult)
 }
 
-socket.on(socketEvents.DELETE_ROOM, deleteRoom);
-socket.on(socketEvents.JOINED_ROOM, joinRoomDone);
-socket.on(socketEvents.CHANGE_STATUS_DONE, changedStatus);
-socket.on(socketEvents.LEAVE_ROOM_DONE, leaveRoom);
-socket.on(socketEvents.START_GAME_TEXT, gameStarted)
+export const onJoinRoom = (username) => {
+  socket = io(socketNamespace.ROOM, { query: { username } });
+  socketEventsList(socket)
+  return (event) => {
+    const roomName = event.target.dataset.roomName;
+    socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
+  };
+};
+
+export const joinMyRoom = (roomName, username) => {
+  socket = io(socketNamespace.ROOM, { query: { username } });
+  socketEventsList(socket)
+  socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
+};
 
 readyStatusBtn.addEventListener("click", changeUserStatus);

@@ -4,7 +4,14 @@ import { texts } from "../data";
 
 const startedGameRooms = new Set();
 
+type Progress = {
+  username: string;
+  progress: number;
+};
+
 let user;
+let winners: string[] = [];
+let progressUsersList: Progress[] = [];
 
 const checkRoomsList = (roomName: string): Room | undefined =>
   roomsArray.find((room: Room): boolean => room.roomName === roomName);
@@ -80,6 +87,43 @@ export default (io) => {
         .to(getRoom(user)?.roomName)
         .emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
       socket.emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
+    });
+
+    socket.on(
+      socketEvents.SEND_PROGRESS,
+      ({ username, progress }: Progress) => {
+        const userExsist = progressUsersList.findIndex(
+          ({ username: user }) => user === username
+        );
+
+        if (progress === 100) {
+          winners = [...winners, username];
+          progressUsersList = progressUsersList.splice(userExsist, 1);
+        }
+        userExsist !== -1
+          ? (progressUsersList[userExsist] = { username, progress })
+          : progressUsersList.push({ username, progress });
+        socket
+          .to(getRoom(username)?.roomName)
+          .emit(socketEvents.GET_PROGRESS, { username, progress });
+      }
+    );
+
+    socket.on(socketEvents.SEND_GAME_RESULT, (username) => {
+      const list: Progress[] = progressUsersList.sort(
+        ({ progress }, { progress: nextProgress }) => progress - nextProgress
+      );
+      if (startedGameRooms.has(getRoom(username)?.roomName)) {
+        const addWinners = list.map(({ username: user }) => user);
+        winners = [...winners, ...addWinners];
+        startedGameRooms.delete(getRoom(username)?.roomName);
+        socket.emit(socketEvents.SHOW_RESULT, winners);
+        socket
+          .to(getRoom(username)?.roomName)
+          .emit(socketEvents.SHOW_RESULT, winners);
+      }
+      winners = [];
+      progressUsersList = [];
     });
 
     socket.on(socketEvents.LEAVE_ROOM, (username: string): void => {

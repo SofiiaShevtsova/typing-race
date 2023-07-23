@@ -19,8 +19,7 @@ export default (io) => {
     const username: string | undefined = socket.handshake.query.username;
 
     if (!username) {
-      socket.emit(socketEvents.BAD_USER_NAME);
-      socket.leave(socket.rooms);
+      return;
     } else {
       if (usersArray.has(username)) {
         socket.emit(socketEvents.BAD_USER_NAME);
@@ -33,6 +32,7 @@ export default (io) => {
 
         socket.on("disconnect", () => {
           usersArray.delete(username);
+          socket.leave(socket.rooms)
         });
       }
     }

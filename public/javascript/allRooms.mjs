@@ -8,7 +8,8 @@ import { removeRoomElement } from "./views/room.mjs";
 let socket = null;
 
 export const allRooms = (username, showRoom) => {
-  socket = io(socketNamespace.ALL_ROOMS, { query: { username: username } });
+  console.log(username);
+  socket = io(socketNamespace.ALL_ROOMS, { query: { username } });
 
   const showAllRooms = (data) => {
     data.map((room) => showRoom(room));

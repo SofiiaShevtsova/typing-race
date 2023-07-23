@@ -14,6 +14,10 @@ type SocketEvents = {
   LEAVE_ROOM_DONE: string;
   START_GAME: string;
   START_GAME_TEXT: string;
+  SEND_PROGRESS: string;
+  GET_PROGRESS: string;
+  SEND_GAME_RESULT: string;
+  SHOW_RESULT: string;
 };
 
 export const socketEvents: SocketEvents = {
@@ -32,4 +36,9 @@ export const socketEvents: SocketEvents = {
   LEAVE_ROOM_DONE: "leave-room-done",
   START_GAME: 'start-game',
   START_GAME_TEXT: 'start-game-text',
+  SEND_PROGRESS: 'send-progress',
+  GET_PROGRESS: 'get-progress',
+    SEND_GAME_RESULT: 'send-game-result',
+  SHOW_RESULT: 'show-result',
+
 };

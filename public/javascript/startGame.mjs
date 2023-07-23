@@ -4,6 +4,7 @@ import {
   PROGRESS,
 } from "./helpers/constants.mjs";
 import { setProgress } from "./views/user.mjs";
+import { gameResult, sendUserProgress } from "./room.mjs";
 
 const timer = document.getElementById("timer");
 const textContainer = document.getElementById("text-container");
@@ -23,28 +24,34 @@ const typingText = (text, user) => {
   return (event) => {
     if (event.key === text[index]) {
       index += 1;
-      let range = new Range();
+      const range = new Range();
       const content = textContainer.firstChild;
       range.setStart(content, 0);
       range.setEnd(content, index);
       const selection = document.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
+      if (index === text.length - 1) {
+        setProgress({ username: user, progress: 100 });
+        sendUserProgress({ username: user, progress: 100 });
+        document.removeEventListener("keydown", functionForTyping);
+      }
       const progress = countProgress(text, index);
       setProgress({ username: user, progress });
+      sendUserProgress({ username: user, progress });
     }
   };
 };
 
 export class Game {
   #textForGame;
-  #functionForTyping;
+  #user;
   #timerBefore = SECONDS_TIMER_BEFORE_START_GAME;
   #timerForGame = SECONDS_FOR_GAME;
 
   constructor({ text, user }) {
     this.#textForGame = text;
-    this.#functionForTyping = typingText(text, user);
+    this.#user = user;
   }
 
   showElement = (...array) => {
@@ -55,7 +62,7 @@ export class Game {
     array.map((element) => element.classList.add("display-none"));
   };
 
-  setTimerBefore = () => {
+  setTimerBefore = (functionForTyping) => {
     let timerId = setInterval(() => {
       timer.textContent = this.#timerBefore;
       this.#timerBefore -= 1;
@@ -65,20 +72,21 @@ export class Game {
         this.hideElement(timer);
         this.showElement(textContainer, gameTimer);
         this.setTimerForGame();
-        document.addEventListener("keydown", this.#functionForTyping);
+        document.addEventListener("keydown", functionForTyping);
       }
     }, 1000);
   };
 
-  setTimerForGame = () => {
+  setTimerForGame = (functionForTyping) => {
     let timerId = setInterval(() => {
       gameTimerSeconds.textContent = this.#timerForGame;
       this.#timerForGame -= 1;
 
       if (this.#timerForGame === 0) {
         clearInterval(timerId);
-        document.removeEventListener("keydown", this.#functionForTyping);
+        document.removeEventListener("keydown", functionForTyping);
         this.hideElement(textContainer, gameTimer);
+        gameResult(this.#user);
       }
     }, 1000);
   };
@@ -88,7 +96,7 @@ export class Game {
     this.hideElement(readyStatusBtn, quitRoomBtn);
     console.log(this.#textForGame);
     textContainer.textContent = this.#textForGame;
-
-    this.setTimerBefore();
+    const functionForTyping = typingText(this.#textForGame, this.#user);
+    this.setTimerBefore(functionForTyping);
   }
 }
