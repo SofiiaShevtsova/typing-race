@@ -38,14 +38,12 @@ const typingText = (text, user) => {
 
 export class Game {
   #textForGame;
-  #userList;
   #functionForTyping;
   #timerBefore = SECONDS_TIMER_BEFORE_START_GAME;
   #timerForGame = SECONDS_FOR_GAME;
 
-  constructor({ text, list, user }) {
+  constructor({ text, user }) {
     this.#textForGame = text;
-    this.#userList = list;
     this.#functionForTyping = typingText(text, user);
   }
 

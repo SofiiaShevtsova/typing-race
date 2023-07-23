@@ -10,8 +10,10 @@ router.get('/', (req, res) => {
 	res.sendFile(page);
 });
 
-router.get('/text', (req, res) => {
-	const text = texts[Math.floor(Math.random()*texts.length)]
+router.get('/text/:id', (req, res) => {
+	const { id } = req.params
+	const text = texts[id]
+	
 	res.status(200).json(text);
 })
 

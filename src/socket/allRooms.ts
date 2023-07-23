@@ -16,7 +16,12 @@ const checkNameRoom = (nameRoom: string): Room | undefined =>
 
 export default (io) => {
   io.on("connection", (socket) => {
-    socket.on(socketEvents.NEW_USER, ({ username }) => {
+    const username: string | undefined = socket.handshake.query.username;
+
+    if (!username) {
+      socket.emit(socketEvents.BAD_USER_NAME);
+      socket.leave(socket.rooms);
+    } else {
       if (usersArray.has(username)) {
         socket.emit(socketEvents.BAD_USER_NAME);
       } else {
@@ -28,26 +33,11 @@ export default (io) => {
 
         socket.on("disconnect", () => {
           usersArray.delete(username);
-
-          const roomWithUser = roomsArray.find((room) =>
-            room.userList.includes(username)
-          );
-          if (roomWithUser) {
-            roomWithUser.userList = roomWithUser.userList.filter(
-              (name) => name !== username
-            );
-            roomWithUser.userList.length === 0 &&
-              setRoomsArray(
-                roomsArray.filter(
-                  (room) => room.roomName !== roomWithUser.roomName
-                )
-              );
-          }
         });
       }
-    });
+    }
 
-    socket.on(socketEvents.NEW_ROOM, (room) => {
+    socket.on(socketEvents.NEW_ROOM, (room: Room): void => {
       if (checkNameRoom(room.roomName)) {
         socket.emit(socketEvents.BAD_ROOM_NAME);
       } else {

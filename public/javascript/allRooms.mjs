@@ -5,11 +5,17 @@ import {
 } from "../javascript/helpers/constants.mjs";
 import { removeRoomElement } from "./views/room.mjs";
 
-const socket = io(socketNamespace.ALL_ROOMS);
+let socket = null;
 
 export const allRooms = (username, showRoom) => {
-  socket.emit(socketEvents.NEW_USER, { username });
+  socket = io(socketNamespace.ALL_ROOMS, { query: { username: username } });
 
+  const showAllRooms = (data) => {
+    data.map((room) => showRoom(room));
+  };
+
+  const showAdedRoom = ({ room, myRoom = false }) =>
+    myRoom ? showRoom(room, myRoom) : showRoom(room);
   const badUserName = () => {
     const onClose = () => {
       sessionStorage.removeItem("username");
@@ -22,22 +28,14 @@ export const allRooms = (username, showRoom) => {
     showMessageModal({ message: "Enter new name!" });
   };
 
-  const showAdedRoom = ({room, myRoom=false}) =>
-    myRoom ? showRoom(room, myRoom) : showRoom(room);
-
-  const showAllRooms = (data) => {
-    data.map((room) => showRoom(room));
-  };
-
   const deleteRoom = ({ roomName }) => {
-    console.log(roomName);
-    removeRoomElement(roomName)
-  }
+    removeRoomElement(roomName);
+  };
 
   socket.on(socketEvents.BAD_USER_NAME, badUserName);
   socket.on(socketEvents.BAD_ROOM_NAME, badRoomName);
+  socket.on(socketEvents.DELETE_ROOM, deleteRoom);
   socket.on(socketEvents.ADD_ROOM, showAdedRoom);
-  socket.on(socketEvents.DELETE_ROOM, deleteRoom)
   socket.on(socketEvents.GET_ROOMS, showAllRooms);
 };
 
