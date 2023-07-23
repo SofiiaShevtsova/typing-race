@@ -31,7 +31,3 @@
   border: 1px solid var(--main-button-border-color);
   padding: 5px 20px;
 }
-
-.room.hidden{
-  display: none;
-}

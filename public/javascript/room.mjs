@@ -77,7 +77,7 @@ const changeStatus = async({ isReady, user }) => {
   const startGame = statusList.every(status => status.dataset.ready === 'true')
   if (startGame) {
     const text = await randomText()
-    const game = new Game({ text, list: list })
+    const game = new Game({ text, list: list, user: currentUser })
     game.start()
   }
 }
