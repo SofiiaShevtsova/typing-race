@@ -1,8 +1,10 @@
-import { Server } from 'socket.io';
-import * as config from './config';
+import { Server } from "socket.io";
+import * as config from "./config";
+
+import allRooms from "./allRooms";
+import room from "./room";
 
 export default (io: Server) => {
-	io.on('connection', socket => {
-		const username = socket.handshake.query.username;
-	});
+  allRooms(io.of("/all-rooms"));
+  room(io.of("/room"));
 };

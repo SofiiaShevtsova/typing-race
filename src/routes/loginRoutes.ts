@@ -5,7 +5,7 @@ import { HTML_FILES_PATH } from '../config';
 const router = Router();
 
 router.get('/', (req, res) => {
-	const page = path.join(HTML_FILES_PATH, 'login.html');
+	const page:string = path.join(HTML_FILES_PATH, 'login.html');
 	res.sendFile(page);
 });
 

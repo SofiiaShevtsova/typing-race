@@ -41,12 +41,17 @@ const appendRoomElement = ({ name, numberOfUsers, onJoin = () => {} }) => {
 
 const updateNumberOfUsersInRoom = ({ name, numberOfUsers }) => {
 	const roomConnectedUsersElement = document.querySelector(`.connected-users[data-room-name='${name}']`);
-	roomConnectedUsersElement.innerText = getNumberOfUsersString(numberOfUsers);
+	if (roomConnectedUsersElement) {
+		roomConnectedUsersElement.innerText = getNumberOfUsersString(numberOfUsers);
 	roomConnectedUsersElement.dataset.roomNumberOfUsers = numberOfUsers;
+	
+	}
 };
 
 const getNumberOfUsersString = numberOfUsers => `${numberOfUsers} connected`;
 
 const removeRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.remove();
 
-export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement };
+const hideRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.classList.add('display-none');
+
+export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement, hideRoomElement };
