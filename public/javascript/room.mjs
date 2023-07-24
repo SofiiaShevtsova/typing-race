@@ -12,7 +12,7 @@ import {
   removeUserElement,
   setProgress,
 } from "./views/user.mjs";
-import { userInRoom, startGame, userOutOfRoom } from "./game.mjs";
+import { userInRoom, startGame, userOutOfRoom, gameEnd } from "./game.mjs";
 import { showResultsModal } from "./views/modal.mjs";
 
 const quitRoomBtn = document.getElementById("quit-room-btn");
@@ -25,7 +25,6 @@ let currentRoom;
 const gameRoom = document.getElementById("game-page");
 const roomTitle = gameRoom.querySelector("#room-name");
 const usersContainer = document.querySelector("#users-wrapper");
-const readyStatusBtn = document.getElementById("ready-btn");
 
 const deleteRoom = ({ roomName }) => {
   removeRoomElement(roomName);
@@ -69,14 +68,12 @@ const joinRoomDone = ({ current, prev, username = null }) => {
   }
 };
 
-const changeUserStatus = (event) => {
-  const isReady = event.currentTarget.textContent === "READY" ? true : false;
-  readyStatusBtn.textContent = isReady ? "NOT READY" : "READY";
-  socket.emit(socketEvents.CHANGE_STATUS, { isReady, user: currentUser });
+export const sendStatus = ({ isReady, user }) => {
+  socket.emit(socketEvents.CHANGE_STATUS, { isReady, username: user });
 };
 
-const changedStatus = async ({ isReady, user }) => {
-  changeReadyStatus({ username: user, ready: isReady });
+const changedStatus = async ({ isReady, username }) => {
+  changeReadyStatus({ username, ready: isReady });
 
   const statusList = [...document.querySelectorAll(".ready-status")];
   const start = statusList.every((status) => status.dataset.ready === "true");
@@ -86,20 +83,27 @@ const changedStatus = async ({ isReady, user }) => {
 };
 
 export const sendUserProgress = ({ username, progress }) => {
-  socket.emit(socketEvents.SEND_PROGRESS, {username, progress})
-}
+  socket.emit(socketEvents.SEND_PROGRESS, { username, progress });
+};
 
 const getprogress = ({ username, progress }) => {
-  setProgress({ username, progress })
-}
+  setProgress({ username, progress });
+};
 
 export const gameResult = (username) => {
-  socket.emit(socketEvents.SEND_GAME_RESULT, username)
-}
+  socket.emit(socketEvents.SEND_GAME_RESULT, username);
+};
 
 const showResult = (winners) => {
-  showResultsModal({usersSortedArray:winners, onClose:()=>{}})
-}
+  const onClose = () => {
+    gameEnd();
+    winners.map((username) => {
+      changeReadyStatus({ username, ready: false });
+      setProgress({ username, progress: 0 });
+    });
+  };
+  showResultsModal({ usersSortedArray: winners, onClose });
+};
 
 const leaveRoom = ({ username, current }) => {
   if (username === currentUser) {
@@ -123,12 +127,12 @@ const socketEventsList = (socket) => {
   socket.on(socketEvents.LEAVE_ROOM_DONE, leaveRoom);
   socket.on(socketEvents.START_GAME_TEXT, gameStarted);
   socket.on(socketEvents.GET_PROGRESS, getprogress);
-  socket.on(socketEvents.SHOW_RESULT, showResult)
-}
+  socket.on(socketEvents.SHOW_RESULT, showResult);
+};
 
 export const onJoinRoom = (username) => {
   socket = io(socketNamespace.ROOM, { query: { username } });
-  socketEventsList(socket)
+  socketEventsList(socket);
   return (event) => {
     const roomName = event.target.dataset.roomName;
     socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
@@ -137,8 +141,6 @@ export const onJoinRoom = (username) => {
 
 export const joinMyRoom = (roomName, username) => {
   socket = io(socketNamespace.ROOM, { query: { username } });
-  socketEventsList(socket)
+  socketEventsList(socket);
   socket.emit(socketEvents.JOIN_ROOM, { roomName, username });
 };
-
-readyStatusBtn.addEventListener("click", changeUserStatus);

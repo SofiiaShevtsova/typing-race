@@ -2,14 +2,13 @@ import { socketEvents } from "../commons/constants";
 import { roomsArray, setRoomsArray, Room } from "./allRooms";
 import { texts } from "../data";
 
-const startedGameRooms = new Set();
+export const startedGameRooms = new Set();
 
 type Progress = {
   username: string;
   progress: number;
 };
 
-let user;
 let winners: string[] = [];
 let progressUsersList: Progress[] = [];
 
@@ -23,6 +22,8 @@ const getText = () => Math.floor(Math.random() * texts.length);
 
 export default (io) => {
   io.on("connection", (socket) => {
+        const user: string | undefined = socket.handshake.query.username;
+
     const deleteUser = (prevRoom: Room, username: string): void => {
       prevRoom.userList = prevRoom.userList.filter(
         (name: string): boolean => name !== username
@@ -33,14 +34,14 @@ export default (io) => {
       }
     };
 
-    const quitRoom = (userForLeave) => {
+    const quitRoom = (userForLeave: string): void => {
       const room: Room | undefined = getRoom(userForLeave);
       if (!room) {
         return;
       }
       socket.emit(socketEvents.LEAVE_ROOM_DONE, {
         current: room,
-        username: user,
+        username: userForLeave,
       });
       socket.broadcast.emit(socketEvents.LEAVE_ROOM_DONE, {
         current: room,
@@ -49,8 +50,7 @@ export default (io) => {
       deleteUser(room, userForLeave);
     };
 
-    socket.on(socketEvents.JOIN_ROOM, ({ roomName, username }) => {
-      user = username;
+    socket.on(socketEvents.JOIN_ROOM, ({ roomName, username }:{roomName: string, username: string}):void => {
       const prevRoom = getRoom(username);
       const currentRoom = checkRoomsList(roomName);
 
@@ -82,39 +82,39 @@ export default (io) => {
       });
     });
 
-    socket.on(socketEvents.CHANGE_STATUS, ({ isReady, user }) => {
+    socket.on(socketEvents.CHANGE_STATUS, ({ isReady, username }:{isReady:boolean, username: string} ): void => {
       socket
-        .to(getRoom(user)?.roomName)
-        .emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
-      socket.emit(socketEvents.CHANGE_STATUS_DONE, { isReady, user });
+        .to(getRoom(username)?.roomName)
+        .emit(socketEvents.CHANGE_STATUS_DONE, { isReady, username });
+      socket.emit(socketEvents.CHANGE_STATUS_DONE, { isReady, username });
     });
 
     socket.on(
       socketEvents.SEND_PROGRESS,
-      ({ username, progress }: Progress) => {
+      ({ username:currentUser, progress }: Progress): void => {
         const userExsist = progressUsersList.findIndex(
-          ({ username: user }) => user === username
+          ({ username }) => currentUser === username
         );
 
         if (progress === 100) {
-          winners = [...winners, username];
+          winners = [...winners, currentUser];
           progressUsersList = progressUsersList.splice(userExsist, 1);
         }
         userExsist !== -1
-          ? (progressUsersList[userExsist] = { username, progress })
-          : progressUsersList.push({ username, progress });
+          ? (progressUsersList[userExsist] = { username:currentUser, progress })
+          : progressUsersList.push({ username:currentUser, progress });
         socket
-          .to(getRoom(username)?.roomName)
-          .emit(socketEvents.GET_PROGRESS, { username, progress });
+          .to(getRoom(currentUser)?.roomName)
+          .emit(socketEvents.GET_PROGRESS, { username:currentUser, progress });
       }
     );
 
-    socket.on(socketEvents.SEND_GAME_RESULT, (username) => {
+    socket.on(socketEvents.SEND_GAME_RESULT, (username:string):void => {
       const list: Progress[] = progressUsersList.sort(
-        ({ progress }, { progress: nextProgress }) => progress - nextProgress
+        ({ progress }, { progress: nextProgress }) => nextProgress - progress
       );
       if (startedGameRooms.has(getRoom(username)?.roomName)) {
-        const addWinners = list.map(({ username: user }) => user);
+        const addWinners:string[] = list.map(({ username: user }) => user);
         winners = [...winners, ...addWinners];
         startedGameRooms.delete(getRoom(username)?.roomName);
         socket.emit(socketEvents.SHOW_RESULT, winners);
@@ -145,7 +145,7 @@ export default (io) => {
     });
 
     socket.on("disconnect", () => {
-      quitRoom(user);
+     user && quitRoom(user);
     });
   });
 };

@@ -1,5 +1,6 @@
-import { log } from "console";
 import { socketEvents } from "../commons/constants";
+import { startedGameRooms } from "./room";
+import { MAXIMUM_USERS_FOR_ONE_ROOM } from "./config";
 
 export type Room = {
   roomName: string;
@@ -27,12 +28,17 @@ export default (io) => {
         usersArray.add(username);
 
         if (roomsArray.length !== 0) {
-          socket.emit(socketEvents.GET_ROOMS, roomsArray);
+          const showRoomsArray = roomsArray.filter(
+            (room: Room): boolean =>
+              !startedGameRooms.has(room.roomName) ||
+              room.userList.length === MAXIMUM_USERS_FOR_ONE_ROOM
+          );
+          socket.emit(socketEvents.GET_ROOMS, showRoomsArray);
         }
 
         socket.on("disconnect", () => {
           usersArray.delete(username);
-          socket.leave(socket.rooms)
+          socket.leave(socket.rooms);
         });
       }
     }

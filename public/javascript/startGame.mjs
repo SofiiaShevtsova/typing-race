@@ -85,8 +85,8 @@ export class Game {
       if (this.#timerForGame === 0) {
         clearInterval(timerId);
         document.removeEventListener("keydown", functionForTyping);
-        this.hideElement(textContainer, gameTimer);
         gameResult(this.#user);
+        this.hideElement(textContainer, gameTimer);
       }
     }, 1000);
   };
@@ -94,7 +94,6 @@ export class Game {
   start() {
     this.showElement(timer);
     this.hideElement(readyStatusBtn, quitRoomBtn);
-    console.log(this.#textForGame);
     textContainer.textContent = this.#textForGame;
     const functionForTyping = typingText(this.#textForGame, this.#user);
     this.setTimerBefore(functionForTyping);
